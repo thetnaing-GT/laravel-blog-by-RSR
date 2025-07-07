@@ -30,22 +30,11 @@ class StoreUpdateArticleRequest extends FormRequest
             'title' => 'required',
             'body' => 'required',
             'category_id' => 'required|exists:categories,id',
-            'new_category' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
         ];
     }
-    public function withValidator($validator)
-    {
-        $validator->after(function ($validator) {
-            if (!$this->category_id && !$this->new_category) {
-                $validator->errors()->add('category_id', 'Please select a category or enter a new one.');
-            }
-        });
-    }
-
-
     
 
 

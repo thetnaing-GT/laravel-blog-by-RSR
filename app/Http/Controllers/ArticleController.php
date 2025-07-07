@@ -65,27 +65,18 @@ class ArticleController extends Controller
 
 
 
+
 public function store(StoreUpdateArticleRequest $request)
 {
     $imageName = $this->handleImageUpload($request);
 
-    if ($request->filled('new_category')) {
-        $category = Category::create([
-            'name' => Str::title($request->new_category),
-        ]);
-        $categoryId = $category->id;
-    } else {
-        $categoryId = $request->category_id;
-    }
-
     $article = Article::create([
         'title' => Str::title($request->title),
         'body' => $request->body,
-        'category_id' => $categoryId,
+        'category_id' => $request->category_id,
         'image' => $imageName,
     ]);
 
-    // Attach tags if selected
     if ($request->filled('tags')) {
         $article->tags()->attach($request->tags);
     }
