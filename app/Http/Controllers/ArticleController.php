@@ -5,46 +5,23 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUpdateArticleRequest;
 use App\Models\Article;
 use App\Models\Category;
-use Illuminate\Http\Request;
-
+use App\Models\Tag;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Models\Tag;
-
-
-
 
 class ArticleController extends Controller
 {
     public function index()
     {
         $articles = Article::with(['category', 'tags'])->latest()->paginate(9);
-
-        return view('articles/index', [
-            'articles' => $articles
-        ]);
+        return view('articles.index', ['articles' => $articles]);
     }
 
     public function detail($id)
     {
-        $data = Article::find($id);
-        return view('articles.detail', [
-            'article' => $data
-        ]);
+        $article = Article::findOrFail($id);
+        return view('articles.detail', ['article' => $article]);
     }
-
-    public function add()
-    {
-        $data = [
-            ["id" => 1, "name" => "Science"],
-            ["id" => 2, "name" => "Technology"],
-        ];
-        
-        return view("articles.add", [
-            'categories' => $data
-        ]);
-    }
-
 
     public function create()
     {
@@ -53,116 +30,121 @@ class ArticleController extends Controller
         return view('articles.add', compact('categories', 'tags'));
     }
 
-    public function delete($id)
+    public function store(StoreUpdateArticleRequest $request)
     {
-        $article = Article::find($id);
-        $article->delete();
+        // Handle category
+        $categoryId = $this->handleCategory($request);
+        
+        // Handle image upload
+        $imageName = $this->handleImageUpload($request);
 
-        return redirect('/articles')->with('info', 'Your article is deleted');
+        // Create article
+        $article = Article::create([
+            'title' => Str::title($request->title),
+            'body' => $request->body,
+            'category_id' => $categoryId,
+            'image' => $imageName,
+        ]);
+
+        // Attach tags if provided
+        if ($request->filled('tags')) {
+            $article->tags()->attach($request->tags);
+        }
+
+        return redirect()->route('articles.index')
+                        ->with('success', 'Article created successfully.');
     }
 
-
-
-
-
-public function store(StoreUpdateArticleRequest $request)
-{
-    $imageName = $this->handleImageUpload($request);
-    $categoryId = $this->handleCategory($request);
-
-    $article = Article::create([
-        'title' => Str::title($request->title),
-        'body' => $request->body,
-        'category_id' => $categoryId,
-        'image' => $imageName,
-    ]);
-
-    if ($request->filled('tags')) {
-        $article->tags()->attach($request->tags);
+    public function edit(Article $article)
+    {
+        $categories = Category::all();
+        $tags = Tag::all();
+        return view('articles.edit', compact('article', 'categories', 'tags'));
     }
 
-    return redirect()->route('articles.index')->with('success', 'Article created successfully.');
-}
+    public function update(StoreUpdateArticleRequest $request, Article $article)
+    {
+        // Handle category
+        $categoryId = $this->handleCategory($request);
+        
+        // Handle image upload
+        $imageName = $this->handleImageUpload($request, $article->image);
 
+        // Update article
+        $article->update([
+            'title' => $request->title,
+            'body' => $request->body,
+            'category_id' => $categoryId,
+            'image' => $imageName,
+        ]);
 
+        // Sync tags
+        $article->tags()->sync($request->input('tags', []));
 
-public function edit(Article $article)
-{
-    $categories = Category::all();
-    $tags = Tag::all();
-    
-    return view('articles.edit', compact('article', 'categories', 'tags'));
-}
-
-public function update(StoreUpdateArticleRequest $request, Article $article)
-{
-    $imageName = $this->handleImageUpload($request, $article->image);
-    $categoryId = $this->handleCategory($request);
-
-    $article->update([
-        'title' => $request->title,
-        'body' => $request->body,
-        'category_id' => $categoryId,
-        'image' => $imageName,
-    ]);
-
-    $article->tags()->sync($request->input('tags', []));
-
-    return redirect()->route('articles.index')->with('success', 'Article updated successfully.');
-}
-
-protected function handleCategory($request)
-{
-    if ($request->has('new_category') && !empty($request->new_category)) {
-        $category = Category::firstOrCreate(['name' => $request->new_category]);
-        return $category->id;
+        return redirect()->route('articles.index')
+                        ->with('success', 'Article updated successfully.');
     }
-    
-    return $request->category_id;
-}
 
+    public function destroy(Article $article)
+    {
+        // Detach all tags first
+        $article->tags()->detach();
 
-protected function handleImageUpload($request, $currentImage = 'default.jpg')
-{
-    if ($request->hasFile('image')) {
-        // Delete old image if it's not the default one
-        if ($currentImage !== 'default.jpg') {
-            $oldImagePath = public_path('images/' . $currentImage);
-            if (file_exists($oldImagePath)) {
-                unlink($oldImagePath);
+        // Delete the article image if it's not the default
+        if ($article->image != 'default.jpg') {
+            $imagePath = public_path('images/' . $article->image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
             }
         }
-
-        // Store new image
-        $imageName = time() . '.' . $request->image->extension();
-        $request->image->move(public_path('images'), $imageName);
-        return $imageName;
+        
+        // Delete the article
+        $article->delete();
+        
+        return redirect()->route('articles.index')
+                        ->with('success', 'Article deleted successfully.');
     }
 
-    return $currentImage;
-}
-
-
-
-public function destroy(Article $article)
-{
-    // Detach all tags first
-    $article->tags()->detach();
-
-    // First we remove all tag relationships using detach()
-    
-    // Delete the article image if it's not the default
-    if ($article->image != 'default.jpg') {
-        $imagePath = public_path('images/' . $article->image);
-        if (file_exists($imagePath)) {
-            unlink($imagePath); // delete
+    /**
+     * Handles category selection/creation
+     */
+   protected function handleCategory($request)
+    {
+        // If new category is provided and no existing category is selected
+        if ($request->filled('new_category') && !$request->filled('category_id')) {
+            // Check if category already exists (case-insensitive)
+            $category = Category::whereRaw('LOWER(name) = ?', [strtolower($request->new_category)])->first();
+            
+            if (!$category) {
+                $category = Category::create(['name' => $request->new_category]);
+            }
+            
+            return $category->id;
         }
+        
+        // Otherwise use the selected category_id
+        return $request->category_id;
     }
-    
-    // Delete the article
-    $article->delete();
-    
-    return redirect()->route('articles.index')->with('success', 'Article deleted successfully.');
-}
+    /**
+     * Handles image upload
+     */
+    protected function handleImageUpload($request, $currentImage = 'default.jpg')
+    {
+        if ($request->hasFile('image')) {
+            // Delete old image if it's not the default one
+            if ($currentImage !== 'default.jpg') {
+                $oldImagePath = public_path('images/' . $currentImage);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
 
+            // Store new image
+            $imageName = time() . '.' . $request->image->extension();
+            $request->image->move(public_path('images'), $imageName);
+            return $imageName;
+        }
+
+        return $currentImage;
+    }
 }

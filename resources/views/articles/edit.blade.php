@@ -35,18 +35,24 @@
             </div>
 
             <div class="mb-3">
-                <label>Category</label>
-                <select name="category_id" class="form-select mb-2">
-                    <option value="">-- Select Existing Category --</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                            {{ $category->name }}
-                        </option>
-                    @endforeach
-                </select>
-                <div class="form-text">IF you do not find, add your new category</div>
-                <input type="text" name="new_category" class="form-control mt-2" placeholder="Add New Category" value="{{ old('new_category') }}">
-            </div>
+    <label>Category</label>
+    <select name="category_id" class="form-select mb-2" id="categorySelect">
+        <option value="">-- Select Existing Category --</option>
+        @foreach ($categories as $category)
+            <option value="{{ $category->id }}" 
+                {{ (isset($article) && $article->category_id == $category->id) ? 'selected' : '' }}>
+                {{ $category->name }}
+            </option>
+        @endforeach
+    </select>
+    <div class="form-text">OR</div>
+    <input type="text" name="new_category" class="form-control mt-2" id="newCategoryInput"
+           placeholder="Add New Category" value="{{ old('new_category') }}">
+    @error('category')
+        <div class="text-danger">{{ $message }}</div>
+    @enderror
+</div>
+
 
             <div class="mb-3">
                 <label>Tags</label>
@@ -64,4 +70,9 @@
             <input type="submit" class="btn btn-primary" value="Update Article">
         </form>
     </div>
+
+    {{-- Remove the inline script and add this at the bottom of the file --}}
+    <script src="{{ asset('js/article-form.js') }}"></script>
+
+
 @endsection

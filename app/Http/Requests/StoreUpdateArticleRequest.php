@@ -24,17 +24,26 @@ class StoreUpdateArticleRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+   public function rules()
     {
         return [
-            'title' => 'required',
-            'body' => 'required',
-            'category_id' => 'required_without:new_category|exists:categories,id',
-            'new_category' => 'required_without:category_id|string|max:255|unique:categories,name',
+            'title' => 'required|string|max:255',
+            'body' => 'required|string',
+            'category_id' => 'required_without:new_category|nullable|exists:categories,id',
+            'new_category' => 'required_without:category_id|nullable|string|max:255|unique:categories,name',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->filled('category_id') && $this->filled('new_category')) {
+                $validator->errors()->add('category', 'You can either select an existing category OR create a new one, not both.');
+            }
+        });
     }
     
 

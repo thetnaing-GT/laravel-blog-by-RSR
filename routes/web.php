@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -41,7 +43,10 @@ Route::delete('/articles/{article}', [ArticleController::class, 'destroy'])->nam
 
 Route::get('/articles/delete/{id}',  [ArticleController::class, 'delete']);
 
+Route::resource('categories', CategoryController::class)->except(['show']);
 
+// If you want to use the API endpoint
+Route::get('/api/categories', [CategoryController::class, 'apiIndex'])->name('categories.api');
 
 
 
