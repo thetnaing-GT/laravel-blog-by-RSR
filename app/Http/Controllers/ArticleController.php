@@ -45,30 +45,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    // public function create()
-    // {
-    //     $validator = validator(request()->all(), [
-    //         'title' => 'required',
-    //         'body' => 'required',
-    //         'category_id' => 'required',
-            
-    //     ]);
-
-        
-
-    //     if($validator->fails()) {
-    //         return back()->withErrors($validator);
-    //     }
-
-    //     $article = new Article;
-    //     $article->title = request()->title;
-    //     $article->body = request()->body;
-    //     $article->category_id = request()->category_id;
-    //     $article->save();
-
-    //     return redirect('/articles');
-
-    // }
 
     public function create()
     {
@@ -95,7 +71,7 @@ public function store(StoreUpdateArticleRequest $request)
     $imageName = $this->handleImageUpload($request);
 
     $article = Article::create([
-        'title' => $request->title,
+        'title' => Str::title($request->title),
         'body' => $request->body,
         'category_id' => $request->category_id,
         'image' => $imageName,
