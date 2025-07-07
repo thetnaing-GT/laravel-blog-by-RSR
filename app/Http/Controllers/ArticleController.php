@@ -53,7 +53,6 @@ class ArticleController extends Controller
         return view('articles.add', compact('categories', 'tags'));
     }
 
-
     public function delete($id)
     {
         $article = Article::find($id);
@@ -69,11 +68,12 @@ class ArticleController extends Controller
 public function store(StoreUpdateArticleRequest $request)
 {
     $imageName = $this->handleImageUpload($request);
+    $categoryId = $this->handleCategory($request);
 
     $article = Article::create([
         'title' => Str::title($request->title),
         'body' => $request->body,
-        'category_id' => $request->category_id,
+        'category_id' => $categoryId,
         'image' => $imageName,
     ]);
 
@@ -97,11 +97,12 @@ public function edit(Article $article)
 public function update(StoreUpdateArticleRequest $request, Article $article)
 {
     $imageName = $this->handleImageUpload($request, $article->image);
+    $categoryId = $this->handleCategory($request);
 
     $article->update([
         'title' => $request->title,
         'body' => $request->body,
-        'category_id' => $request->category_id,
+        'category_id' => $categoryId,
         'image' => $imageName,
     ]);
 
@@ -110,6 +111,15 @@ public function update(StoreUpdateArticleRequest $request, Article $article)
     return redirect()->route('articles.index')->with('success', 'Article updated successfully.');
 }
 
+protected function handleCategory($request)
+{
+    if ($request->has('new_category') && !empty($request->new_category)) {
+        $category = Category::firstOrCreate(['name' => $request->new_category]);
+        return $category->id;
+    }
+    
+    return $request->category_id;
+}
 
 
 protected function handleImageUpload($request, $currentImage = 'default.jpg')

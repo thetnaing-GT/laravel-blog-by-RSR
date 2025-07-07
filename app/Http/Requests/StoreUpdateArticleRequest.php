@@ -29,7 +29,8 @@ class StoreUpdateArticleRequest extends FormRequest
         return [
             'title' => 'required',
             'body' => 'required',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required_without:new_category|exists:categories,id',
+            'new_category' => 'required_without:category_id|string|max:255|unique:categories,name',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',

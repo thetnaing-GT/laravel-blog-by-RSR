@@ -30,16 +30,21 @@
                 <label>Body</label>
                 <textarea name="body" class="form-control"></textarea>
             </div>
+            
             <div class="mb-3">
                 <label>Category</label>
-                <select name="category_id" class="form-select">
+                <select name="category_id" class="form-select mb-2">
+                    <option value="">-- Select Existing Category --</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category['id'] }}">
-                            {{ $category['name'] }}
+                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
                         </option>
                     @endforeach
                 </select>
+                <div class="form-text">IF you do not find, add your new category</div>
+                <input type="text" name="new_category" class="form-control mt-2" placeholder="Add New Category" value="{{ old('new_category') }}">
             </div>
+
 
             <div class="mb-3">
         <label>Tags</label>
