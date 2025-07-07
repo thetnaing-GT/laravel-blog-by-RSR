@@ -3,44 +3,61 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUpdateArticleRequest;
-use App\Models\Article;
-use App\Models\Category;
-use App\Models\Tag;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+
+use App\Repositories\Interfaces\{
+    ArticleRepositoryInterface,
+    CategoryRepositoryInterface,
+    TagRepositoryInterface
+};
 
 class ArticleController extends Controller
 {
+    protected $articleRepository;
+    protected $categoryRepository;
+    protected $tagRepository;
+
+    public function __construct(
+        ArticleRepositoryInterface $articleRepository,
+        CategoryRepositoryInterface $categoryRepository,
+        TagRepositoryInterface $tagRepository
+    ) {
+        $this->articleRepository = $articleRepository;
+        $this->categoryRepository = $categoryRepository;
+        $this->tagRepository = $tagRepository;
+    }
+
     public function index()
     {
-        $articles = Article::with(['category', 'tags'])->latest()->paginate(9);
+        $articles = $this->articleRepository->paginateWithRelations(['category', 'tags']);
         return view('articles.index', ['articles' => $articles]);
     }
 
     public function detail($id)
     {
-        $article = Article::findOrFail($id);
+        $article = $this->articleRepository->findWithRelations($id, ['category', 'tags']);
         return view('articles.detail', ['article' => $article]);
     }
 
     public function create()
     {
-        $categories = Category::all();
-        $tags = Tag::all();
+        $categories = $this->categoryRepository->all();
+        $tags = $this->tagRepository->all();
         return view('articles.add', compact('categories', 'tags'));
     }
 
     public function store(StoreUpdateArticleRequest $request)
     {
         // Handle category
-        $categoryId = $this->handleCategory($request);
+        $categoryId = $request->filled('new_category') && !$request->filled('category_id')
+            ? $this->articleRepository->findOrCreateCategory($request->new_category)
+            : $request->category_id;
         
         // Handle image upload
-        $imageName = $this->handleImageUpload($request);
+        $imageName = $this->articleRepository->handleImageUpload($request);
 
         // Create article
-        $article = Article::create([
-            'title' => Str::title($request->title),
+        $article = $this->articleRepository->create([
+            'title' => $request->title,
             'body' => $request->body,
             'category_id' => $categoryId,
             'image' => $imageName,
@@ -48,30 +65,34 @@ class ArticleController extends Controller
 
         // Attach tags if provided
         if ($request->filled('tags')) {
-            $article->tags()->attach($request->tags);
+            $this->articleRepository->syncTags($article->id, $request->tags);
         }
 
         return redirect()->route('articles.index')
                         ->with('success', 'Article created successfully.');
     }
 
-    public function edit(Article $article)
+    public function edit($id)
     {
-        $categories = Category::all();
-        $tags = Tag::all();
+        $article = $this->articleRepository->findWithRelations($id);
+        $categories = $this->categoryRepository->all();
+        $tags = $this->tagRepository->all();
         return view('articles.edit', compact('article', 'categories', 'tags'));
     }
 
-    public function update(StoreUpdateArticleRequest $request, Article $article)
+    public function update(StoreUpdateArticleRequest $request, $id)
     {
         // Handle category
-        $categoryId = $this->handleCategory($request);
+        $categoryId = $request->filled('new_category') && !$request->filled('category_id')
+            ? $this->articleRepository->findOrCreateCategory($request->new_category)
+            : $request->category_id;
         
         // Handle image upload
-        $imageName = $this->handleImageUpload($request, $article->image);
+        $currentImage = $this->articleRepository->findWithRelations($id)->image;
+        $imageName = $this->articleRepository->handleImageUpload($request, $currentImage);
 
         // Update article
-        $article->update([
+        $this->articleRepository->update($id, [
             'title' => $request->title,
             'body' => $request->body,
             'category_id' => $categoryId,
@@ -79,72 +100,16 @@ class ArticleController extends Controller
         ]);
 
         // Sync tags
-        $article->tags()->sync($request->input('tags', []));
+        $this->articleRepository->syncTags($id, $request->input('tags', []));
 
         return redirect()->route('articles.index')
                         ->with('success', 'Article updated successfully.');
     }
 
-    public function destroy(Article $article)
+    public function destroy($id)
     {
-        // Detach all tags first
-        $article->tags()->detach();
-
-        // Delete the article image if it's not the default
-        if ($article->image != 'default.jpg') {
-            $imagePath = public_path('images/' . $article->image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
-        }
-        
-        // Delete the article
-        $article->delete();
-        
+        $this->articleRepository->delete($id);
         return redirect()->route('articles.index')
                         ->with('success', 'Article deleted successfully.');
-    }
-
-    /**
-     * Handles category selection/creation
-     */
-   protected function handleCategory($request)
-    {
-        // If new category is provided and no existing category is selected
-        if ($request->filled('new_category') && !$request->filled('category_id')) {
-            // Check if category already exists (case-insensitive)
-            $category = Category::whereRaw('LOWER(name) = ?', [strtolower($request->new_category)])->first();
-            
-            if (!$category) {
-                $category = Category::create(['name' => $request->new_category]);
-            }
-            
-            return $category->id;
-        }
-        
-        // Otherwise use the selected category_id
-        return $request->category_id;
-    }
-    /**
-     * Handles image upload
-     */
-    protected function handleImageUpload($request, $currentImage = 'default.jpg')
-    {
-        if ($request->hasFile('image')) {
-            // Delete old image if it's not the default one
-            if ($currentImage !== 'default.jpg') {
-                $oldImagePath = public_path('images/' . $currentImage);
-                if (file_exists($oldImagePath)) {
-                    unlink($oldImagePath);
-                }
-            }
-
-            // Store new image
-            $imageName = time() . '.' . $request->image->extension();
-            $request->image->move(public_path('images'), $imageName);
-            return $imageName;
-        }
-
-        return $currentImage;
     }
 }
