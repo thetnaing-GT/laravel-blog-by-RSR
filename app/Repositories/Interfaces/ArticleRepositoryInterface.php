@@ -15,5 +15,4 @@ interface ArticleRepositoryInterface
     public function syncTags(int $articleId, array $tagIds = []);
     public function findOrCreateCategory(string $categoryName);
     public function handleImageUpload($request, string $currentImage = 'default.jpg'): string;
-     public function paginateWithCapitalizedTitle($relations);
 }
