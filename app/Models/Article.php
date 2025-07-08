@@ -26,11 +26,25 @@ class Article extends Model
         return $this->belongsToMany(Tag::class);
     }
 
+    // public function scopeWithCapitalizedTitle($query)
+    // {
+    //     // no query
+    //     // to indicate ->withCapitalizedTitle() 
+
+    //     return $query;
+    // }
+
+
+
     public function scopeWithCapitalizedTitle($query)
     {
-        // define scope logic in model
-        // define the scope withCapitalizedTitle(), we are telling Laravel to modify the query to create a new virtual field (not a real field in the database) that holds the capitalized version of the article's title.
-        return $query->selectRaw('*, CONCAT(UPPER(LEFT(title, 1)), LOWER(SUBSTRING(title, 2))) as capitalized_title');
+        return $query;
+    }
+
+
+    public function getCapitalizedTitleAttribute()
+    {
+        return ucfirst(strtolower($this->title));
     }
 
 }
