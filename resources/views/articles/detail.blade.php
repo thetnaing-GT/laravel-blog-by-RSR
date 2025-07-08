@@ -4,7 +4,7 @@
     <div class="container">
         <div class="card mb-2">
             <div class="card-body">
-                <h5 class="card-title">{{ $article->title }}</h5>
+                <h5 class="card-title">{{ $article->capitalized_title }}</h5>
                 <div class="card-subtitle mb-2 text-muted small">
                     {{ $article->created_at }}, Category:<b> {{ $article->category->name }} </b>
                 </div>
