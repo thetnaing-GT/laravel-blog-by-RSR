@@ -100,4 +100,11 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
 
         return $currentImage;
     }
+
+    public function paginateWithCapitalizedTitle($relations)
+    {
+        return Article::with($relations)
+                      ->withCapitalizedTitle()  // Apply the scope for capitalized title
+                      ->paginate(10); // or whatever pagination limit you want
+    }
 }

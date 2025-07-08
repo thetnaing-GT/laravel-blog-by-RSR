@@ -27,4 +27,9 @@ class Article extends Model
         return $this->belongsToMany(Tag::class);
     }
 
+     public function scopeWithCapitalizedTitle($query)
+    {
+        return $query->selectRaw('*, UPPER(LEFT(title, 1)) || LOWER(SUBSTRING(title, 2)) as capitalized_title');
+    }
+
 }
