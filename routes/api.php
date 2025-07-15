@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Route;
 Route::apiResource('articles', ArticleApiController::class);
 
 // Categories API
-Route::apiResource('categories', CategoryApiController::class)->except(['show']);
+Route::apiResource('categories', CategoryApiController::class);
 
 // Tags API
 Route::apiResource('tags', TagApiController::class);

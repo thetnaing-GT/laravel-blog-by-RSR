@@ -27,9 +27,11 @@ class EloquentCategoryRepository implements CategoryRepositoryInterface
         return $this->model->latest()->paginate($perPage);
     }
 
-    public function find(int $id)
+    public function find(int $id, array $relations = [])
     {
-        return $this->model->findOrFail($id);
+        // return $this->model->findOrFail($id);
+        return $this->model->with($relations)->findOrFail($id);
+
     }
 
     public function create(array $data)
