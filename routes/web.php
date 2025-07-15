@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ArticleApiController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TagController;
@@ -45,8 +46,6 @@ Route::get('/articles/delete/{id}',  [ArticleController::class, 'delete']);
 
 Route::resource('categories', CategoryController::class)->except(['show']);
 
-// If you want to use the API endpoint
-Route::get('/api/categories', [CategoryController::class, 'apiIndex'])->name('categories.api');
 
 Route::put('/tags/{tag}', [TagController::class, 'update'])->name('tags.update');
 // routes/web.php
