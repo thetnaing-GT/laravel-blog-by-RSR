@@ -25,14 +25,15 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
     }
 
 
-     public function paginateWithRelations(array $relations = [], int $perPage = 9): Paginator
-    {
-        return $this->model->with($relations)
-                           ->withCapitalizedTitle() // Apply the capitalized title scope here
-                           ->latest()
-                           ->paginate($perPage);
-    }
 
+    public function paginateWithRelations(array $relations = [], int $perPage = 9): Paginator
+    {
+        $relations = array_merge($relations, ['user']); // Ensure user is always loaded
+        return $this->model->with(array_unique($relations))
+                        ->withCapitalizedTitle()
+                        ->latest()
+                        ->paginate($perPage);
+    }
 
     public function findWithRelations(int $id, array $relations = [])
     {

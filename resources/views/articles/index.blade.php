@@ -1,7 +1,7 @@
 @extends("layouts.app")
 
 @section("content")
-    <div class="contatiner">
+    <div class="container">
 
         @if (session('info'))
             <div class="alert alert-info">
@@ -15,6 +15,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ $article->capitalized_title }}</h5>
                     <div class="card-subtitle mb-2 text-muted small">
+                        <b> {{ $article->user->name }} </b>,
                         {{ $article->created_at }}, Category:<b>{{ $article->category->name }}</b>
 
                         <div class="mb-2">

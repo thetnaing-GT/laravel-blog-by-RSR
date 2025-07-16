@@ -29,9 +29,10 @@ class ArticleController extends Controller
 
     public function index()
     {
-        $articles = $this->articleRepository->paginateWithRelations(['category', 'tags']);
+        $articles = $this->articleRepository->paginateWithRelations(['category', 'tags', 'user']);
         return view('articles.index', ['articles' => $articles]);
     }
+
 
     public function detail($id)
     {

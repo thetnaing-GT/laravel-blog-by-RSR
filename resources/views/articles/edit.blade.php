@@ -14,7 +14,7 @@
 
         <form action="{{ url("/articles/{$article->id}") }}" method="POST" enctype="multipart/form-data">
             @csrf
-            @method('PUT') <!-- This converts POST to PUT -->
+            @method('PUT') 
 
             <div class="mb-3">
                 <label>Title</label>
