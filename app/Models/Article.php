@@ -14,6 +14,7 @@ class Article extends Model
     'body',
     'category_id',
     'image',
+    'user_id',
 ];
 
     public function category()
@@ -26,19 +27,14 @@ class Article extends Model
         return $this->belongsToMany(Tag::class);
     }
 
-    // public function scopeWithCapitalizedTitle($query)
-    // {
-    //     // no query
-    //     // to indicate ->withCapitalizedTitle() 
-
-    //     return $query;
-    // }
-
-
+    public function user()
+    {
+           return $this->belongsTo(User::class);
+    }
 
     public function scopeWithCapitalizedTitle($query)
     {
-        return $query;
+        return $query->selectRaw('*, CONCAT(UPPER(LEFT(title, 1)), SUBSTRING(title, 2)) as title');
     }
 
 

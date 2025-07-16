@@ -7,6 +7,7 @@ use App\Repositories\Interfaces\ArticleRepositoryInterface;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class EloquentArticleRepository implements ArticleRepositoryInterface
@@ -41,19 +42,28 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
     public function create(array $data)
     {
         $data['title'] = Str::title($data['title']);
+        $data['user_id'] = Auth::id(); //  user_id to the authenticated user's ID and every new articles have user_id
         return $this->model->create($data);
     }
 
     public function update(int $id, array $data)
     {
-        $article = $this->findWithRelations($id);
+        // Added Ownership Checks 
+        $article = $this->findWithRelations($id, ['user']);
+        if ($article->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+        $data['title'] = Str::title($data['title']);
         $article->update($data);
         return $article;
     }
 
     public function delete(int $id)
     {
-        $article = $this->findWithRelations($id);
+        $article = $this->findWithRelations($id, ['user']);
+        if ($article->user_id !== Auth::id()) { // Ownership Check
+            abort(403, 'Unauthorized action.');
+        }
         
         // Detach all tags first
         $article->tags()->detach();
@@ -69,6 +79,8 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
         return $article->delete();
     }
 
+
+
     public function syncTags(int $articleId, array $tagIds = [])
     {
         $article = $this->findWithRelations($articleId);
@@ -77,8 +89,8 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
 
     public function findOrCreateCategory(string $categoryName)
     {
+        $categoryName = Str::title($categoryName);
         $category = Category::whereRaw('LOWER(name) = ?', [strtolower($categoryName)])->first();
-            
         if (!$category) {
             $category = Category::create(['name' => $categoryName]);
         }

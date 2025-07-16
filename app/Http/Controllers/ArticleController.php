@@ -24,6 +24,7 @@ class ArticleController extends Controller
         $this->articleRepository = $articleRepository;
         $this->categoryRepository = $categoryRepository;
         $this->tagRepository = $tagRepository;
+        $this->middleware('auth')->except(['index', 'detail']);
     }
 
     public function index()
@@ -45,13 +46,18 @@ class ArticleController extends Controller
         return view('articles.add', compact('categories', 'tags'));
     }
 
+    // In ArticleController
+    private function resolveCategoryId($request)
+    {
+        return $request->filled('new_category') && !$request->filled('category_id')
+            ? $this->articleRepository->findOrCreateCategory($request->new_category)
+            : $request->category_id;
+    }
+
     public function store(StoreUpdateArticleRequest $request)
     {
         // Handle category
-        $categoryId = $request->filled('new_category') && !$request->filled('category_id')
-            ? $this->articleRepository->findOrCreateCategory($request->new_category)
-            : $request->category_id;
-        
+        $categoryId = $this->resolveCategoryId($request);
         // Handle image upload
         $imageName = $this->articleRepository->handleImageUpload($request);
 
@@ -83,9 +89,7 @@ class ArticleController extends Controller
     public function update(StoreUpdateArticleRequest $request, $id)
     {
         // Handle category
-        $categoryId = $request->filled('new_category') && !$request->filled('category_id')
-            ? $this->articleRepository->findOrCreateCategory($request->new_category)
-            : $request->category_id;
+        $categoryId = $this->resolveCategoryId($request);
         
         // Handle image upload
         $currentImage = $this->articleRepository->findWithRelations($id)->image;
@@ -97,6 +101,9 @@ class ArticleController extends Controller
             'body' => $request->body,
             'category_id' => $categoryId,
             'image' => $imageName,
+            // Security: You don’t trust user_id coming from the request (the user might try to submit someone else’s ID).
+        
+
         ]);
 
         // Sync tags
