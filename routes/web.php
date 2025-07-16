@@ -25,6 +25,10 @@ Route::get('/articles', [ArticleController::class, 'index'])->name('articles.ind
 
 
 Route::get('/articles/detail/{id}',  [ArticleController::class, 'detail']);
+Route::get('/my-articles', [ArticleController::class, 'myArticles'])
+    ->name('articles.my')
+    ->middleware('auth');
+
 
 
 

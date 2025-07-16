@@ -34,11 +34,16 @@
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav me-auto">
                         @auth
-                            <li class="nav-item">
-                            <a href="{{ url("/articles/add") }}" class="nav-link text-success">
+                            <li class="nav-item ms-2 my-2">
+                                <a href="{{ url("/articles/add") }}" class="btn btn-outline-info" role="button">
                                 + Add Article
-                            </a>
-                        </li>
+                                </a>
+                            </li>
+                            <li class="nav-item ms-2 my-2">
+                                <a href="{{ route('articles.my') }}" class="btn btn-outline-success" role="button">
+                                    <i class="bi bi-card-list"></i> My Articles
+                                </a>
+                            </li>
                         @endauth
                     </ul>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUpdateArticleRequest;
+use Illuminate\Support\Facades\Auth;
 
 use App\Repositories\Interfaces\{
     ArticleRepositoryInterface,
@@ -120,4 +121,12 @@ class ArticleController extends Controller
         return redirect()->route('articles.index')
                         ->with('success', 'Article deleted successfully.');
     }
+
+    public function myArticles()
+{
+    $articles = $this->articleRepository
+                    ->getByUserIdWithRelations(Auth::id(), ['category', 'tags']);
+                    
+    return view('articles.my_articles', ['articles' => $articles]);
+}
 }

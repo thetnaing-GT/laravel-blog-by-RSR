@@ -118,4 +118,13 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
 
         return $currentImage;
     }
+
+    public function getByUserIdWithRelations($userId, array $relations = [])
+    {
+        return Article::with($relations)
+                    ->where('user_id', $userId)
+                    ->latest()
+                    ->paginate();
+    }
+
 }
