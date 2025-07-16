@@ -121,7 +121,7 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
 
     public function getByUserIdWithRelations($userId, array $relations = [])
     {
-        return Article::with($relations)
+        return Article::with($relations) // with() method is used for eager loading of related data
                     ->where('user_id', $userId)
                     ->latest()
                     ->paginate();
