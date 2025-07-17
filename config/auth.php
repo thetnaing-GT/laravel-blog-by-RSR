@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults
@@ -12,9 +11,8 @@ return [
     | as required, but they're a perfect start for most applications.
     |
     */
-
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'web',  // Default remains web for browser-based auth
         'passwords' => 'users',
     ],
 
@@ -31,14 +29,19 @@ return [
     | users are actually retrieved out of your database or other storage
     | mechanisms used by this application to persist your user's data.
     |
-    | Supported: "session"
+    | Supported: "session", "token", "sanctum"
     |
     */
-
     'guards' => [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+        ],
+
+        'api' => [
+            'driver' => 'sanctum',  // Changed from 'token' to 'sanctum'
+            'provider' => 'users',
+            'hash' => false,
         ],
     ],
 
@@ -58,7 +61,6 @@ return [
     | Supported: "database", "eloquent"
     |
     */
-
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
@@ -85,7 +87,6 @@ return [
     | they have less time to be guessed. You may change this as needed.
     |
     */
-
     'passwords' => [
         'users' => [
             'provider' => 'users',
@@ -105,7 +106,5 @@ return [
     | confirmation screen. By default, the timeout lasts for three hours.
     |
     */
-
     'password_timeout' => 10800,
-
 ];

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use App\Repositories\Interfaces\ArticleRepositoryInterface;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use App\Repositories\Interfaces\TagRepositoryInterface;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\ArticleResource;
 
 
@@ -146,4 +146,19 @@ class ArticleApiController extends Controller
         $this->articleRepository->delete($id);
         return response()->json(null, 204);
     }
+
+    
+    public function myArticles(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $articles = $this->articleRepository->getByUserIdWithRelations($user->id, ['category', 'tags']);
+
+        return ArticleResource::collection($articles);
+    }
 }
+

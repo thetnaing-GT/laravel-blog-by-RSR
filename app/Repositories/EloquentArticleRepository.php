@@ -127,4 +127,5 @@ class EloquentArticleRepository implements ArticleRepositoryInterface
                     ->paginate();
     }
 
+    
 }
